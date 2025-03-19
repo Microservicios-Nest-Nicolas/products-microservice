@@ -1,16 +1,17 @@
 import {
   BadRequestException,
-  ConflictException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
-import { CreateProductDto } from './dto/create-product.dto';
-import { UpdateProductDto } from './dto/update-product.dto';
+import { RpcException } from '@nestjs/microservices';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { PaginationDto } from 'src/common';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService extends PrismaClient implements OnModuleInit {
@@ -26,22 +27,7 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       data: createProductDto,
     });
   }
-  /**
-   * Recupera una lista paginada de productos junto con metadatos sobre la paginación.
-   *
-   * @param paginatioDto - Un objeto que contiene los parámetros de paginación:
-   *   - `page`: El número de la página actual (índice basado en 1).
-   *   - `limit`: La cantidad de elementos a recuperar por página.
-   *
-   * @returns Un objeto que contiene:
-   *   - `data`: Un arreglo de productos para la página actual.
-   *   - `meta`: Metadatos sobre la paginación, incluyendo:
-   *     - `totalPages`: El número total de productos.
-   *     - `page`: El número de la página actual.
-   *     - `lastPage`: El número de la última página basado en el total de productos y el límite.
-   *
-   * @throws Lanzará un error si la transacción con la base de datos falla.
-   */
+
   async findAll(paginatioDto: PaginationDto) {
     const { page, limit } = paginatioDto;
 
@@ -76,7 +62,10 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       where: { id: id, available: true },
     });
     if (!product) {
-      throw new NotFoundException(`Product with id: #${id} not found`);
+      throw new RpcException({
+        message: `Product with id #${id} not found`,
+        status: HttpStatus.BAD_REQUEST,
+      });
     }
     return product;
   }
@@ -100,12 +89,18 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
           case 'P2025': // Registro no encontrado
-            throw new NotFoundException(`Product with id: #${id} not found`);
+            throw new RpcException({
+              message: `Product with id: #${id} not found`,
+              status: HttpStatus.NOT_FOUND,
+            });
           default:
-            throw new BadRequestException('Error en la solicitud');
+            throw new RpcException({
+              message: 'Error en la solicitud',
+              status: HttpStatus.BAD_REQUEST,
+            });
         }
       }
-      throw new InternalServerErrorException();
+      throw new RpcException(error);
     }
   }
 
@@ -127,12 +122,18 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
           case 'P2025': // Registro no encontrado
-            throw new NotFoundException(`Product with id: #${id} not found`);
+            throw new RpcException({
+              message: `Product with id: #${id} not found`,
+              status: HttpStatus.NOT_FOUND,
+            });
           default:
-            throw new BadRequestException('Error en la solicitud');
+            throw new RpcException({
+              message: 'Error en la solicitud',
+              status: HttpStatus.BAD_REQUEST,
+            });
         }
       }
-      throw new InternalServerErrorException();
+      throw new RpcException(error);
     }
   }
 }
