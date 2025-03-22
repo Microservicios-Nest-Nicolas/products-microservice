@@ -85,22 +85,10 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       ]);
       return productUpdate;
     } catch (error) {
-      // Respondemos conforme al codigo de error de prisma
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2025': // Registro no encontrado
-            throw new RpcException({
-              message: `Product with id: #${id} not found`,
-              status: HttpStatus.NOT_FOUND,
-            });
-          default:
-            throw new RpcException({
-              message: 'Error en la solicitud',
-              status: HttpStatus.BAD_REQUEST,
-            });
-        }
-      }
-      throw new RpcException(error);
+      throw new RpcException({
+        message: 'Error en la solicitud',
+        status: HttpStatus.BAD_REQUEST,
+      });
     }
   }
 
@@ -118,22 +106,32 @@ export class ProductsService extends PrismaClient implements OnModuleInit {
       ]);
       return productDeleted;
     } catch (error) {
-      // Respondemos conforme al codigo de error de prisma
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2025': // Registro no encontrado
-            throw new RpcException({
-              message: `Product with id: #${id} not found`,
-              status: HttpStatus.NOT_FOUND,
-            });
-          default:
-            throw new RpcException({
-              message: 'Error en la solicitud',
-              status: HttpStatus.BAD_REQUEST,
-            });
-        }
-      }
-      throw new RpcException(error);
+      throw new RpcException({
+        message: 'Error en la solicitud',
+        status: HttpStatus.BAD_REQUEST,
+      });
     }
+  }
+
+  async validateProducts(ids: number[]) {
+    ids = Array.from(new Set(ids));
+
+    const products = await this.product.findMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        available: true,
+      },
+    });
+
+    if (products.length !== ids.length) {
+      throw new RpcException({
+        message: 'Some products where not found',
+        status: HttpStatus.BAD_REQUEST,
+      });
+    }
+
+    return products;
   }
 }
