@@ -1,6 +1,12 @@
 import * as joi from 'joi';
 
-process.loadEnvFile();
+try {
+  process.loadEnvFile();
+} catch (error) {
+  console.log(
+    'No .env file found, using environment variables from the system',
+  );
+}
 
 interface EnvVars {
   PORT: number;
