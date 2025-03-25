@@ -1,14 +1,11 @@
 import {
-  BadRequestException,
   HttpStatus,
   Injectable,
-  InternalServerErrorException,
   Logger,
-  NotFoundException,
-  OnModuleInit,
+  OnModuleInit
 } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { PaginationDto } from 'src/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
